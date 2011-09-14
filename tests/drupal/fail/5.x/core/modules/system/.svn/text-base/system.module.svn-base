@@ -1,0 +1,4 @@
+/**
+ * The current system version.
+ */
+define('VERSION', '5.22');
