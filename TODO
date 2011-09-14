@@ -1,0 +1,8 @@
+TODO
+====
+- Distinction between critical and non-critical vulnerabilities
+- Separation into languages so people can include/exclude as necessary
+  e.g. if their setup only permits user-installed PHP and not Perl,
+  they shouldn't have to match against Perl projects.
+- Known false-positives list.
+- Host somewhere.
