@@ -5,4 +5,4 @@ TODO
   e.g. if their setup only permits user-installed PHP and not Perl,
   they shouldn't have to match against Perl projects.
 - Known false-positives list.
-- Host somewhere.
+- "More info" links to products' security feeds?
