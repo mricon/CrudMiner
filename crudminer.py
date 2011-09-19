@@ -117,7 +117,7 @@ class CrudProduct:
 
         return (is_secure, got_version, self.secure, self.comment)
 
-def analyze_dir(rootpath, crudfile, quiet):
+def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
 
     config = ConfigParser()
     if crudfile.find('://') > -1:
@@ -134,6 +134,11 @@ def analyze_dir(rootpath, crudfile, quiet):
     seekpaths = {}
     seekfiles = []
     for section in config.sections():
+        if len(wantenv) > 0:
+            seekenv  = config.get(section, 'env')
+            # do we care about this env?
+            if seekenv not in wantenv:
+                continue
         seekpath = config.get(section, 'path')
         if seekpath not in seekpaths.keys():
             seekpaths[seekpath] = []
@@ -208,6 +213,10 @@ def main():
     parser.add_option('-s', '--report-secure', dest='repsec', 
         action='store_true', default=False,
         help='Include secure versions in the report, as well as vulnerable.')
+    parser.add_option('-e', '--environment', dest='env', action='append',
+        default=[],
+        help='Only analyze for these environments (php, perl, etc). \
+              Default: all')
 
     (opts, args) = parser.parse_args()
     
@@ -216,7 +225,7 @@ def main():
 
     rootpath = os.path.abspath(args[0])
 
-    report = analyze_dir(rootpath, opts.crudfile, opts.quiet)
+    report = analyze_dir(rootpath, opts.crudfile, opts.quiet, opts.env)
 
     if opts.csv is not None:
         import csv

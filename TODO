@@ -1,8 +1,10 @@
 TODO
 ====
 - Distinction between critical and non-critical vulnerabilities
-- Separation into languages so people can include/exclude as necessary
-  e.g. if their setup only permits user-installed PHP and not Perl,
-  they shouldn't have to match against Perl projects.
-- Known false-positives list.
-- "More info" links to products' security feeds?
+  - Who says what is critical?
+  - A lot more extra work!
+- Allow a list of paths to exclude
+  - With a list of versions not to check? A.k.a. "we know, shut up."
+- Pass a mapping of path to email address for automated email spamming to site
+  owners
+  - Not that it's very effective, but it's a start
