@@ -24,11 +24,13 @@
 import os, sys
 import re
 
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, RawConfigParser
 from fnmatch      import fnmatch
 
 
 CRUDFILE = './crud.ini'
+TEMPLATE = './template.ini'
+MAILHOST = 'localhost'
 
 class CrudProduct:
 
@@ -37,6 +39,8 @@ class CrudProduct:
         self.expand  = config.get(name, 'expand')
         self.secure  = config.get(name, 'secure')
         self.comment = config.get(name, 'comment')
+        self.env     = config.get(name, 'env')
+        self.infourl = config.get(name, 'infourl')
 
         regex = config.get(name, 'regex')
 
@@ -115,7 +119,7 @@ class CrudProduct:
                 self.version_compare(got_version, self.secure) >= 0:
             is_secure = True
 
-        return (is_secure, got_version, self.secure, self.comment)
+        return (is_secure, got_version)
 
 def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
 
@@ -172,17 +176,18 @@ def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
                         result = product.analyze(contents) 
                         if result is None:
                             continue
+                        (is_secure, got_version) = result
                         status = 'vulnerable'
-                        if result[0]:
+                        if is_secure:
                             status = 'secure'
                         else:
                             if not quiet:
                                 print "[%s] %s found, %s wanted, in %s" % (
-                                        product.name, result[1], result[2], 
-                                        installdir)
+                                        product.name, got_version, 
+                                        product.secure, installdir)
                             
-                        report.append((installdir, product.name, 
-                                       result[1], result[2], status, result[3]))
+                        report.append((installdir, product, status, 
+                                       got_version))
                         break
 
     return report
@@ -207,7 +212,7 @@ def main():
         help='Location of the crud.ini file (%default).')
     parser.add_option('-q', '--quiet', dest='quiet', action='store_true',
         default=False,
-        help='Do not output anything (usually used with --csv).')
+        help='Do not output anything (usually with -r or -m).')
     parser.add_option('-r', '--csv-report', dest='csv', default=None,
         help='Produce a CSV report and save it in a file.')
     parser.add_option('-s', '--report-secure', dest='repsec', 
@@ -217,6 +222,15 @@ def main():
         default=[],
         help='Only analyze for these environments (php, perl, etc). \
               Default: all')
+    parser.add_option('-m', '--mailmap', dest='mailmap',
+        help='Use this path-to-email mapping file to send email notices '
+              'to site owners. The file is json-encoded (see example).')
+    parser.add_option('--template', dest='template',
+        default=TEMPLATE,
+        help='Template to use. See provided example.')
+    parser.add_option('--mailhost', dest='mailhost',
+        default=MAILHOST,
+        help='SMTP server to use for sending mail')
 
     (opts, args) = parser.parse_args()
     
@@ -232,19 +246,93 @@ def main():
         out = open(opts.csv, 'w')
         writer = csv.writer(out, quoting=csv.QUOTE_ALL)
         writer.writerow(('path', 'product', 'found', 'secure', 'status',
-                         'comment'))
+                         'comment', 'more info'))
         
-        for entry in report:
-            if  entry[4] == 'secure' and not opts.repsec:
+        for (installdir, product, status, got_version) in report:
+            if  status == 'secure' and not opts.repsec:
                 continue
 
-            writer.writerow(entry)
+            writer.writerow((installdir, product.name, got_version,
+                             product.secure, status, product.comment,
+                             product.infourl))
 
         out.close()
 
         if not opts.quiet:
             print 'CSV report saved in %s' % opts.csv
     
+    if opts.mailmap is not None:
+        # load the mail mapping
+        import json
+        mfh = open(opts.mailmap, 'r')
+        mailmap = json.load(mfh)
+        mfh.close()
+
+        # load the email template
+        tfh = open(opts.template, 'r')
+        tptini = RawConfigParser()
+        tptini.readfp(tfh)
+        tfh.close()
+
+        import smtplib
+        from email.mime.text import MIMEText
+
+        subject  = tptini.get('headers', 'subject')
+        mailfrom = tptini.get('headers', 'from')
+        mailcc   = tptini.get('headers', 'cc')
+
+        greeting    = tptini.get('body', 'greeting')
+        productline = tptini.get('body', 'productline')
+        hasupdate   = tptini.get('body', 'hasupdate')
+        noupdate    = tptini.get('body', 'noupdate')
+        hascomment  = tptini.get('body', 'hascomment')
+        hasinfourl  = tptini.get('body', 'hasinfourl')
+        closing     = tptini.get('body', 'closing')
+
+        for (installdir, product, status, got_version) in report:
+            if status == 'secure':
+                continue
+
+            # is this path in our mailmap?
+            for path in mailmap.keys():
+                if fnmatch(installdir, path + '*'):
+                    # formulate an email
+                    body = greeting
+                    body += '\n\n'
+                    body += productline % {'productname': product.name,
+                                           'foundversion': got_version}
+                    body += '\n\n'
+
+                    if product.secure != 'none':
+                        body += hasupdate % {'secureversion': product.secure}
+                    else:
+                        body += noupdate
+
+                    body += '\n\n'
+
+                    if product.comment:
+                        body += hascomment % {'comment': product.comment}
+                        body += '\n\n'
+
+                    if product.infourl:
+                        body += hasinfourl % {'infourl': product.infourl}
+                        body += '\n\n'
+
+                    body += closing
+
+                    # send mail
+                    msg = MIMEText(body)
+
+                    msg['Subject'] = subject
+                    msg['To'] = ', '.join(mailmap[path])
+                    msg['Cc'] = mailcc
+
+                    s = smtplib.SMTP(opts.mailhost)
+                    s.sendmail(mailfrom, mailmap[path], msg.as_string())
+                    s.quit()
+
+                    break
+
     
 if __name__ == '__main__':
     main()

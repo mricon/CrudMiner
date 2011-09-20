@@ -1,0 +1,9 @@
+{
+    "*/tests/wordpress/": [
+        "foo@example.com"
+    ],
+    "*/tests/mambo/": [
+        "bar@example.com",
+        "baz@example.com"
+    ]
+}

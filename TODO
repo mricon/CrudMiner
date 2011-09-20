@@ -5,6 +5,3 @@ TODO
   - A lot more extra work!
 - Allow a list of paths to exclude
   - With a list of versions not to check? A.k.a. "we know, shut up."
-- Pass a mapping of path to email address for automated email spamming to site
-  owners
-  - Not that it's very effective, but it's a start
