@@ -1,9 +1,15 @@
 {
-    "*/tests/wordpress/": [
-        "foo@example.com"
-    ],
-    "*/tests/mambo/": [
-        "bar@example.com",
-        "baz@example.com"
-    ]
+    "*/tests/wordpress/": {
+        "fqdn": "example.com",
+        "admins": [
+            "foo@example.com"
+        ]
+    },
+    "*/tests/mambo/":  {
+        "fqdn": "example2.com",
+        "admins": [
+            "bar@example2.com",
+            "baz@example2.com"
+        ]
+    }
 }

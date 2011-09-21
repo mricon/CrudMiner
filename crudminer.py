@@ -297,7 +297,7 @@ def main():
             for path in mailmap.keys():
                 if fnmatch(installdir, path + '*'):
                     # formulate an email
-                    body = greeting
+                    body = greeting % {'sitename': mailmap[path]['fqdn']}
                     body += '\n\n'
                     body += productline % {'productname': product.name,
                                            'foundversion': got_version}
@@ -323,12 +323,14 @@ def main():
                     # send mail
                     msg = MIMEText(body)
 
-                    msg['Subject'] = subject
-                    msg['To'] = ', '.join(mailmap[path])
+                    msg['Subject'] = subject % {
+                            'sitename': mailmap[path]['fqdn']}
+                    msg['To'] = ', '.join(mailmap[path]['admins'])
                     msg['Cc'] = mailcc
 
                     s = smtplib.SMTP(opts.mailhost)
-                    s.sendmail(mailfrom, mailmap[path], msg.as_string())
+                    s.sendmail(mailfrom, mailmap[path]['admins'],
+                               msg.as_string())
                     s.quit()
 
                     break
