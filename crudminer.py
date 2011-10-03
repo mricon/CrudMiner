@@ -224,7 +224,7 @@ def main():
               Default: all')
     parser.add_option('-m', '--mailmap', dest='mailmap',
         help='Use this path-to-email mapping file to send email notices '
-              'to site owners. The file is json-encoded (see example).')
+              'to site owners. See example file.')
     parser.add_option('--template', dest='template',
         default=TEMPLATE,
         help='Template to use. See provided example.')
@@ -263,10 +263,24 @@ def main():
     
     if opts.mailmap is not None:
         # load the mail mapping
-        import json
         mfh = open(opts.mailmap, 'r')
-        mailmap = json.load(mfh)
+        mmapini = ConfigParser()
+        mmapini.readfp(mfh)
         mfh.close()
+
+        mailmap = {}
+
+        for fqdn in mmapini.sections():
+            path = mmapini.get(fqdn, 'path')
+            path = os.path.normpath(path) + '/'
+            email = mmapini.get(fqdn, 'email')
+            if email.find(',') > -1:
+                admins = []
+                for admin in email.split(','):
+                    admins.append(admin.strip())
+            else:
+                admins = [email]
+            mailmap[path] = {'fqdn': fqdn, 'admins': admins}
 
         # load the email template
         tfh = open(opts.template, 'r')
@@ -275,11 +289,17 @@ def main():
         tfh.close()
 
         import smtplib
-        from email.mime.text import MIMEText
+        try:
+            from email.mime.text import MIMEText
+        except ImportError:
+            from email.MIMEText import MIMEText
 
         subject  = tptini.get('headers', 'subject')
         mailfrom = tptini.get('headers', 'from')
-        mailcc   = tptini.get('headers', 'cc')
+        try: 
+            mailcc   = tptini.get('headers', 'cc')
+        except:
+            mailcc   = ''
 
         greeting    = tptini.get('body', 'greeting')
         productline = tptini.get('body', 'productline')
@@ -289,9 +309,13 @@ def main():
         hasinfourl  = tptini.get('body', 'hasinfourl')
         closing     = tptini.get('body', 'closing')
 
+        smtp = smtplib.SMTP(opts.mailhost)
+
         for (installdir, product, status, got_version) in report:
             if status == 'secure':
                 continue
+
+            installdir = os.path.normpath(installdir) + '/'
 
             # is this path in our mailmap?
             for path in mailmap.keys():
@@ -299,8 +323,9 @@ def main():
                     # formulate an email
                     body = greeting % {'sitename': mailmap[path]['fqdn']}
                     body += '\n\n'
-                    body += productline % {'productname': product.name,
-                                           'foundversion': got_version}
+                    body += productline % {'productname':  product.name,
+                                           'foundversion': got_version,
+                                           'installdir':   installdir}
                     body += '\n\n'
 
                     if product.secure != 'none':
@@ -324,16 +349,29 @@ def main():
                     msg = MIMEText(body)
 
                     msg['Subject'] = subject % {
-                            'sitename': mailmap[path]['fqdn']}
+                                     'sitename': mailmap[path]['fqdn']}
                     msg['To'] = ', '.join(mailmap[path]['admins'])
-                    msg['Cc'] = mailcc
 
-                    s = smtplib.SMTP(opts.mailhost)
-                    s.sendmail(mailfrom, mailmap[path]['admins'],
-                               msg.as_string())
-                    s.quit()
+                    if mailcc:
+                        msg['Cc'] = mailcc
+
+                    if not opts.quiet:
+                        print 'Nagging owners of: %s (%s)' % (
+                                mailmap[path]['fqdn'], installdir)
+
+                    recipients = mailmap[path]['admins']
+
+                    if mailcc:
+                        recipients.append(mailcc)
+
+                    try:
+                        smtp.sendmail(mailfrom, recipients, msg.as_string())
+                    except:
+                        print 'Sending to %s failed' % mailmap[path]['admins']
 
                     break
+
+        smtp.quit()
 
     
 if __name__ == '__main__':
