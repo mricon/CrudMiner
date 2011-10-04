@@ -27,6 +27,7 @@ import re
 from ConfigParser import ConfigParser, RawConfigParser
 from fnmatch      import fnmatch
 
+VERSION  = '0.1'
 
 CRUDFILE = './crud.ini'
 TEMPLATE = './template.ini'
@@ -192,6 +193,76 @@ def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
 
     return report
 
+def loadmailmap(mailmapini):
+    conf = ConfigParser()
+    conf.read(mailmapini)
+
+    mailmap = {}
+
+    for fqdn in conf.sections():
+        path = conf.get(fqdn, 'path')
+        path = os.path.normpath(path) + '/'
+        email = conf.get(fqdn, 'email')
+        if email.find(',') > -1:
+            admins = []
+            for admin in email.split(','):
+                admins.append(admin.strip())
+        else:
+            admins = [email]
+        mailmap[path] = {'fqdn': fqdn, 'admins': admins}
+
+    return mailmap
+
+def nagowners(naglist, opts):
+    import smtplib
+    from email.Utils import COMMASPACE
+
+    try:
+        from email.mime.text import MIMEText
+    except ImportError:
+        # for older python versions
+        from email.MIMEText import MIMEText
+
+    smtp = smtplib.SMTP(opts.mailhost)
+    
+    dotremove = re.compile('^\.$', re.MULTILINE)
+    
+    for sitename, nagdata in naglist.items():
+        body = nagdata['greeting']
+        body += '\n'
+
+        body += '\n'.join(nagdata['products'])
+        
+        body += nagdata['closing']
+
+        # A hack to preserve linebreaks is to keep
+        # lonely "." on each line. 
+        body = dotremove.sub('', body)
+
+        # send mail
+        msg = MIMEText(body)
+
+        msg['From'] = nagdata['mailfrom']
+        msg['Subject'] = nagdata['subject']
+        msg['To'] = COMMASPACE.join(nagdata['admins'])
+
+        if nagdata['mailcc']:
+            msg['Cc'] = nagdata['mailcc']
+
+        recipients = nagdata['admins']
+
+        if nagdata['mailcc']:
+            recipients.append(nagdata['mailcc'])
+
+        try:
+            print recipients
+            print msg
+            #smtp.sendmail(nagdata['mailfrom'], recipients, msg.as_string())
+        except:
+            print 'Sending to %s failed' % recipients
+
+    smtp.quit()
+
 
 def main():
     '''
@@ -262,37 +333,12 @@ def main():
             print 'CSV report saved in %s' % opts.csv
     
     if opts.mailmap is not None:
-        # load the mail mapping
-        mfh = open(opts.mailmap, 'r')
-        mmapini = ConfigParser()
-        mmapini.readfp(mfh)
-        mfh.close()
-
-        mailmap = {}
-
-        for fqdn in mmapini.sections():
-            path = mmapini.get(fqdn, 'path')
-            path = os.path.normpath(path) + '/'
-            email = mmapini.get(fqdn, 'email')
-            if email.find(',') > -1:
-                admins = []
-                for admin in email.split(','):
-                    admins.append(admin.strip())
-            else:
-                admins = [email]
-            mailmap[path] = {'fqdn': fqdn, 'admins': admins}
+        mailmap = loadmailmap(opts.mailmap)
 
         # load the email template
-        tfh = open(opts.template, 'r')
         tptini = RawConfigParser()
-        tptini.readfp(tfh)
-        tfh.close()
+        tptini.read(opts.template)
 
-        import smtplib
-        try:
-            from email.mime.text import MIMEText
-        except ImportError:
-            from email.MIMEText import MIMEText
 
         subject  = tptini.get('headers', 'subject')
         mailfrom = tptini.get('headers', 'from')
@@ -309,7 +355,7 @@ def main():
         hasinfourl  = tptini.get('body', 'hasinfourl')
         closing     = tptini.get('body', 'closing')
 
-        smtp = smtplib.SMTP(opts.mailhost)
+        naglist = {}
 
         for (installdir, product, status, got_version) in report:
             if status == 'secure':
@@ -320,58 +366,56 @@ def main():
             # is this path in our mailmap?
             for path in mailmap.keys():
                 if fnmatch(installdir, path + '*'):
-                    # formulate an email
-                    body = greeting % {'sitename': mailmap[path]['fqdn']}
-                    body += '\n\n'
-                    body += productline % {'productname':  product.name,
-                                           'foundversion': got_version,
-                                           'installdir':   installdir}
-                    body += '\n\n'
+                    sitename = mailmap[path]['fqdn']
+                    values = {
+                            'sitename'        : sitename,
+                            'productname'     : product.name,
+                            'foundversion'    : got_version,
+                            'installdir'      : installdir,
+                            'secureversion'   : product.secure,
+                            'comment'         : product.comment,
+                            'infourl'         : product.infourl,
+                            'crudminerversion': VERSION
+                            }
+
+                    if sitename not in naglist:
+                        naglist[sitename] = {
+                                'admins'  : mailmap[path]['admins'],
+                                'mailfrom': mailfrom,
+                                'mailcc'  : mailcc,
+                                'subject' : subject % values,
+                                'greeting': greeting % values,
+                                'products': [],
+                                'closing' : closing % values
+                                }
+
+                    # formulate product lines
+
+                    entry = productline % values
+                    entry += '\n'
 
                     if product.secure != 'none':
-                        body += hasupdate % {'secureversion': product.secure}
+                        entry += hasupdate % values
                     else:
-                        body += noupdate
+                        entry += noupdate % values
 
-                    body += '\n\n'
+                    entry += '\n'
 
                     if product.comment:
-                        body += hascomment % {'comment': product.comment}
-                        body += '\n\n'
+                        entry += hascomment % values
+                        entry += '\n'
 
                     if product.infourl:
-                        body += hasinfourl % {'infourl': product.infourl}
-                        body += '\n\n'
+                        entry += hasinfourl % values
+                        entry += '\n'
 
-                    body += closing
-
-                    # send mail
-                    msg = MIMEText(body)
-
-                    msg['Subject'] = subject % {
-                                     'sitename': mailmap[path]['fqdn']}
-                    msg['To'] = ', '.join(mailmap[path]['admins'])
-
-                    if mailcc:
-                        msg['Cc'] = mailcc
-
-                    if not opts.quiet:
-                        print 'Nagging owners of: %s (%s)' % (
-                                mailmap[path]['fqdn'], installdir)
-
-                    recipients = mailmap[path]['admins']
-
-                    if mailcc:
-                        recipients.append(mailcc)
-
-                    try:
-                        smtp.sendmail(mailfrom, recipients, msg.as_string())
-                    except:
-                        print 'Sending to %s failed' % mailmap[path]['admins']
+                    naglist[sitename]['products'].append(entry)
 
                     break
+            
+        if naglist:
+            nagowners(naglist, opts)
 
-        smtp.quit()
 
     
 if __name__ == '__main__':
