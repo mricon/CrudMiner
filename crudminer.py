@@ -254,12 +254,13 @@ def nagowners(naglist, opts):
         if nagdata['mailcc']:
             recipients.append(nagdata['mailcc'])
 
+        if not opts.quiet:
+            print 'Nagging: %s' % msg['To']
+
         try:
-            print recipients
-            print msg
-            #smtp.sendmail(nagdata['mailfrom'], recipients, msg.as_string())
-        except:
-            print 'Sending to %s failed' % recipients
+            smtp.sendmail(nagdata['mailfrom'], recipients, msg.as_string())
+        except smtplib.SMTPRecipientsRefused as ex:
+            print 'Nagging failed: %s' % ex
 
     smtp.quit()
 
