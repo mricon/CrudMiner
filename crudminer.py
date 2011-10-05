@@ -259,7 +259,7 @@ def nagowners(naglist, opts):
 
         try:
             smtp.sendmail(nagdata['mailfrom'], recipients, msg.as_string())
-        except smtplib.SMTPRecipientsRefused as ex:
+        except smtplib.SMTPRecipientsRefused, ex:
             print 'Nagging failed: %s' % ex
 
     smtp.quit()
