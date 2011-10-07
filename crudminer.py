@@ -246,13 +246,11 @@ def nagowners(naglist, opts):
         msg['Subject'] = nagdata['subject']
         msg['To'] = COMMASPACE.join(nagdata['admins'])
 
-        if nagdata['mailcc']:
-            msg['Cc'] = nagdata['mailcc']
-
         recipients = nagdata['admins']
 
         if nagdata['mailcc']:
-            recipients.append(nagdata['mailcc'])
+            msg['Cc'] = COMMASPACE.join(nagdata['mailcc'])
+            recipients.extend(nagdata['mailcc'])
 
         if not opts.quiet:
             print 'Nagging: %s' % msg['To']
@@ -344,9 +342,12 @@ def main():
         subject  = tptini.get('headers', 'subject')
         mailfrom = tptini.get('headers', 'from')
         try: 
-            mailcc   = tptini.get('headers', 'cc')
+            mailcc = []
+            for email in tptini.get('headers', 'cc').split(','):
+                mailcc.append(email.strip())
+
         except:
-            mailcc   = ''
+            mailcc   = []
 
         greeting    = tptini.get('body', 'greeting')
         productline = tptini.get('body', 'productline')
