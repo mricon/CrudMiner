@@ -27,11 +27,20 @@ import re
 from ConfigParser import ConfigParser, RawConfigParser
 from fnmatch      import fnmatch
 
-VERSION  = '0.1'
+import smtplib
+from email.Utils import COMMASPACE
+
+try:
+    from email.mime.text import MIMEText
+except ImportError:
+    # for older python versions
+    from email.MIMEText import MIMEText
+
+VERSION  = '0.2'
 
 CRUDFILE = './crud.ini'
-TEMPLATE = './template.ini'
-MAILHOST = 'localhost'
+MAILOPTS = './mailopts.ini'
+dotremove = re.compile('^\.$', re.MULTILINE)
 
 class CrudProduct:
 
@@ -213,22 +222,11 @@ def loadmailmap(mailmapini):
 
     return mailmap
 
-def nagowners(naglist, opts):
-    import smtplib
-    from email.Utils import COMMASPACE
-
-    try:
-        from email.mime.text import MIMEText
-    except ImportError:
-        # for older python versions
-        from email.MIMEText import MIMEText
-
-    smtp = smtplib.SMTP(opts.mailhost)
-    
-    dotremove = re.compile('^\.$', re.MULTILINE)
-    
+def nagowners(naglist, smtp, opts):
     for sitename, nagdata in naglist.items():
         body = nagdata['greeting']
+        body += '\n'
+        body += nagdata['daysleft']
         body += '\n'
 
         body += '\n'.join(nagdata['products'])
@@ -260,8 +258,10 @@ def nagowners(naglist, opts):
         except smtplib.SMTPRecipientsRefused, ex:
             print 'Nagging failed: %s' % ex
 
-    smtp.quit()
 
+def checknagstate(sconn, installed_dir, product_name, found_version, opts):
+
+    return daysleft
 
 def main():
     '''
@@ -292,15 +292,8 @@ def main():
         default=[],
         help='Only analyze for these environments (php, perl, etc). \
               Default: all')
-    parser.add_option('-m', '--mailmap', dest='mailmap',
-        help='Use this path-to-email mapping file to send email notices '
-              'to site owners. See example file.')
-    parser.add_option('--template', dest='template',
-        default=TEMPLATE,
-        help='Template to use. See provided example.')
-    parser.add_option('--mailhost', dest='mailhost',
-        default=MAILHOST,
-        help='SMTP server to use for sending mail')
+    parser.add_option('--mailopts', dest='mailopts',
+        help='Send notification emails and use these options.')
 
     (opts, args) = parser.parse_args()
     
@@ -331,33 +324,61 @@ def main():
         if not opts.quiet:
             print 'CSV report saved in %s' % opts.csv
     
-    if opts.mailmap is not None:
-        mailmap = loadmailmap(opts.mailmap)
+    if opts.mailopts is not None:
+        # load mail options
+        mailini = RawConfigParser()
+        mailini.read(opts.mailopts)
+        mainopts = mailini.items('main')
 
-        # load the email template
-        tptini = RawConfigParser()
-        tptini.read(opts.template)
+        mailmap = loadmailmap(mailini.get('main', 'mailmap'))
 
+        nagdays    = mailini.getint('main', 'nagdays')
+        nagfreq    = mailini.getint('main', 'nagfreq')
+        mailhost   = mailini.get('main', 'mailhost')
+        statedb    = mailini.get('main', 'statedb')
 
-        subject  = tptini.get('headers', 'subject')
-        mailfrom = tptini.get('headers', 'from')
-        try: 
-            mailcc = []
-            for email in tptini.get('headers', 'cc').split(','):
-                mailcc.append(email.strip())
+        subject  = mailini.get('nagmail', 'subject')
+        mailfrom = mailini.get('nagmail', 'from')
+        mailcc = []
+        for email in mailini.get('nagmail', 'cc').split(','):
+            mailcc.append(email.strip())
 
-        except:
-            mailcc   = []
+        greeting    = mailini.get('nagmail', 'greeting')
+        daysleft    = mailini.get('nagmail', 'daysleft')
+        productline = mailini.get('nagmail', 'productline')
+        hasupdate   = mailini.get('nagmail', 'hasupdate')
+        noupdate    = mailini.get('nagmail', 'noupdate')
+        hascomment  = mailini.get('nagmail', 'hascomment')
+        hasinfourl  = mailini.get('nagmail', 'hasinfourl')
+        closing     = mailini.get('nagmail', 'closing')
+        
+        try:
+            import sqlite3 as sqlite
+        except ImportError:
+            import sqlite
 
-        greeting    = tptini.get('body', 'greeting')
-        productline = tptini.get('body', 'productline')
-        hasupdate   = tptini.get('body', 'hasupdate')
-        noupdate    = tptini.get('body', 'noupdate')
-        hascomment  = tptini.get('body', 'hascomment')
-        hasinfourl  = tptini.get('body', 'hasinfourl')
-        closing     = tptini.get('body', 'closing')
+        import time, datetime
+
+        if not os.path.exists(statedb):
+            # create the database
+            sconn = sqlite.connect(statedb)
+            query = """CREATE TABLE nagstate (
+                              installed_dir TEXT,
+                              product_name  TEXT,
+                              found_version TEXT,
+                              found_date    DATE DEFAULT CURRENT_DATE,
+                              nag_date      DATE DEFAULT CURRENT_DATE,
+                              do_not_nag    INTEGER DEFAULT 0)"""
+            scursor = sconn.cursor()
+            scursor.execute(query)
+        else:
+            sconn = sqlite.connect(statedb)
 
         naglist = {}
+        offenders = {}
+
+        now  = time.localtime()
+        nowdate = datetime.date(now[0], now[1], now[2])
 
         for (installdir, product, status, got_version) in report:
             if status == 'secure':
@@ -367,56 +388,208 @@ def main():
 
             # is this path in our mailmap?
             for path in mailmap.keys():
-                if fnmatch(installdir, path + '*'):
-                    sitename = mailmap[path]['fqdn']
-                    values = {
-                            'sitename'        : sitename,
-                            'productname'     : product.name,
-                            'foundversion'    : got_version,
-                            'installdir'      : installdir,
-                            'secureversion'   : product.secure,
-                            'comment'         : product.comment,
-                            'infourl'         : product.infourl,
-                            'crudminerversion': VERSION
-                            }
+                if not fnmatch(installdir, path + '*'):
+                    continue
 
-                    if sitename not in naglist:
+                # Do we have it in statedb?
+                installed_dir_sql = installdir.replace("'", "''")
+                product_name_sql  = product.name.replace("'", "''")
+                found_version_sql = got_version.replace("'", "''")
+                equery = """
+                    SELECT found_date, nag_date, do_not_nag
+                      FROM nagstate
+                     WHERE installed_dir = '""" + installed_dir_sql + """'
+                       AND product_name  = '""" + product_name_sql  + """'
+                       AND found_version = '""" + found_version_sql + "'"
+                scursor = sconn.cursor()
+                scursor.execute(equery)
+
+                row = scursor.fetchone()
+
+                isnew = 0
+
+                if not row:
+                    # this is a new discovery
+                    isnew = 1
+                    nquery = """
+                        INSERT INTO nagstate
+                                    (installed_dir, product_name, 
+                                     found_version)
+                             VALUES ('""" + installed_dir_sql + """',
+                                     '""" + product_name_sql  + """',
+                                     '""" + found_version_sql + "')"
+                    out = scursor.execute(nquery)
+                    # rerun the equery, to get the dates
+                    scursor.execute(equery)
+                    row = scursor.fetchone()
+                    
+                (found_date, nag_date, do_not_nag) = row
+                # do they need to be nagged?
+                if do_not_nag != 0:
+                    # we were asked not to nag them
+                    continue
+
+                # sqlite3 and sqlite behave differently, so we cast to 
+                # strings. Depending on the version, it may or may not 
+                # contain 00:00:00.00 at the end
+                nag_date   = str(nag_date)
+                found_date = str(found_date)
+
+                try:
+                    then  = time.strptime(nag_date, '%Y-%m-%d')
+                    found = time.strptime(found_date, '%Y-%m-%d')
+                except ValueError:
+                    then  = time.strptime(nag_date, '%Y-%m-%d 00:00:00.00')
+                    found = time.strptime(found_date, '%Y-%m-%d 00:00:00.00')
+                    
+                thendate = datetime.date(then[0], then[1], then[2])
+                nagdiff = nowdate - thendate
+
+                if not isnew and nagdiff.days < nagfreq:
+                    # they don't get nagged
+                    continue
+
+                # update nag date
+                uquery = """
+                    UPDATE nagstate
+                       SET nag_date = CURRENT_DATE
+                     WHERE installed_dir = '""" + installed_dir_sql + """'
+                       AND product_name  = '""" + product_name_sql  + """'
+                       AND found_version = '""" + found_version_sql + "'"
+                scursor.execute(uquery)
+
+                founddiff = nowdate - datetime.date(found[0], found[1], 
+                                                    found[2])
+
+                sitename = mailmap[path]['fqdn']
+
+                values = {
+                        'nagdays'         : nagdays,
+                        'daysleft'        : nagdays - founddiff.days,
+                        'sitename'        : sitename,
+                        'productname'     : product.name,
+                        'foundversion'    : got_version,
+                        'installdir'      : installdir,
+                        'secureversion'   : product.secure,
+                        'comment'         : product.comment,
+                        'infourl'         : product.infourl,
+                        'crudminerversion': VERSION
+                        }
+
+                if founddiff.days > nagdays:
+                    # past nagging deadline, don't nag them any more,
+                    # but keep nagging the hosting admins
+                    if sitename not in offenders.keys():
+                        offenders[sitename] = {
+                                'admins':    mailmap[path]['admins'],
+                                'knowndays': founddiff.days,
+                                'products':  [],
+                                }
+                    
+                else:
+                    if sitename not in naglist.keys():
                         naglist[sitename] = {
                                 'admins'  : mailmap[path]['admins'],
                                 'mailfrom': mailfrom,
                                 'mailcc'  : mailcc,
                                 'subject' : subject % values,
                                 'greeting': greeting % values,
+                                'daysleft': daysleft % values,
                                 'products': [],
                                 'closing' : closing % values
                                 }
 
-                    # formulate product lines
+                # formulate product lines
 
-                    entry = productline % values
+                entry = productline % values
+                entry += '\n'
+
+                if product.secure != 'none':
+                    entry += hasupdate % values
+                else:
+                    entry += noupdate % values
+
+                entry += '\n'
+
+                if product.comment:
+                    entry += hascomment % values
                     entry += '\n'
 
-                    if product.secure != 'none':
-                        entry += hasupdate % values
-                    else:
-                        entry += noupdate % values
-
+                if product.infourl:
+                    entry += hasinfourl % values
                     entry += '\n'
 
-                    if product.comment:
-                        entry += hascomment % values
-                        entry += '\n'
-
-                    if product.infourl:
-                        entry += hasinfourl % values
-                        entry += '\n'
-
+                if founddiff.days > nagdays:
+                    offenders[sitename]['products'].append(entry)
+                else:
                     naglist[sitename]['products'].append(entry)
 
-                    break
-            
+                break
+
+        # send the mail now
+        smtp = smtplib.SMTP(mailhost)
+    
         if naglist:
-            nagowners(naglist, opts)
+            nagowners(naglist, smtp, opts)
+
+        if offenders:
+            subject   = mailini.get('nagreport', 'subject')
+            mailfrom  = mailini.get('nagreport', 'from')
+            greeting  = mailini.get('nagreport', 'greeting')
+            hostentry = mailini.get('nagreport', 'hostentry')
+            closing   = mailini.get('nagreport', 'closing')
+
+            mailto = []
+            for email in mailini.get('nagreport', 'to').split(','):
+                mailto.append(email.strip())
+
+            mailcc = []
+            for email in mailini.get('nagreport', 'cc').split(','):
+                mailcc.append(email.strip())
+
+            values = {
+                    'nagdays': nagdays,
+                    'crudminerversion': VERSION
+                    }
+
+            body = greeting % values
+            body += '\n'
+
+            for sitename, offdata in offenders.items():
+                values['admins'] = COMMASPACE.join(offdata['admins'])
+                values['sitename'] = sitename
+                values['knowndays'] = offdata['knowndays']
+
+                body += hostentry % values
+                body += '\n'
+                body += '\n'.join(offdata['products'])
+        
+            body += closing % values
+            body = dotremove.sub('', body)
+
+            # send mail
+            msg = MIMEText(body)
+
+            msg['From'] = mailfrom
+            msg['Subject'] = subject
+            msg['To'] = COMMASPACE.join(mailto)
+
+            recipients = mailto
+
+            if mailcc:
+                msg['Cc'] = COMMASPACE.join(mailcc)
+                recipients.extend(mailcc)
+
+            if not opts.quiet:
+                print 'Sending an offender report to: %s' % msg['To']
+
+            try:
+                smtp.sendmail(mailfrom, recipients, msg.as_string())
+            except smtplib.SMTPRecipientsRefused, ex:
+                print 'Sending offender report failed: %s' % ex
+
+        sconn.commit()
+        smtp.quit()
 
 
     
