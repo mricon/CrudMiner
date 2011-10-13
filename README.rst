@@ -39,12 +39,10 @@ you to automatically nag owners of sites to update their software. Not
 that this is very effective, but it helps shift the blame::
 
     ./crudminer.py -q \
-        --mailmap=/path/to/mailmap.ini \
-        --template=/path/to/template.ini \
-        --mailhost=mailhost.example.com \
+        --mailopts=/path/to/mailopts.ini \
         /path/to/www
 
-See the provided examples of the `mailmap.ini` and `template.ini` files.
+See the provided example of the `mailopts.ini` for more info.
 
 Further work
 ------------
