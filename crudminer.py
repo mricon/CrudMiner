@@ -28,18 +28,18 @@ from ConfigParser import ConfigParser, RawConfigParser
 from fnmatch      import fnmatch
 
 import smtplib
-from email.Utils import COMMASPACE
 
 try:
     from email.mime.text import MIMEText
+    from email.utils import COMMASPACE
 except ImportError:
     # for older python versions
     from email.MIMEText import MIMEText
+    from email.Utils import COMMASPACE
 
-VERSION  = '0.2'
+VERSION   = '0.2'
+CRUDFILE  = './crud.ini'
 
-CRUDFILE = './crud.ini'
-MAILOPTS = './mailopts.ini'
 dotremove = re.compile('^\.$', re.MULTILINE)
 
 class CrudProduct:
@@ -54,12 +54,12 @@ class CrudProduct:
 
         regex = config.get(name, 'regex')
 
-        self.regex = re.compile(regex, re.MULTILINE | re.DOTALL)
-
+        self.regex   = re.compile(regex, re.MULTILINE | re.DOTALL)
         self.isalnum = re.compile('[^a-zA-Z0-9]')
 
-    # Adapted from
-    # http://concisionandconcinnity.blogspot.com/2008/12/rpm-style-version-comparison-in-python.html
+    # Adapted from a function found on
+    # http://concisionandconcinnity.blogspot.com/
+    # Snippet Copyright 2008 Ian McCracken, licensed under GPLv3.
     def _gen_segments(self, val):
         """
         Generator that splits a string into segments.
@@ -211,13 +211,9 @@ def loadmailmap(mailmapini):
     for fqdn in conf.sections():
         path = conf.get(fqdn, 'path')
         path = os.path.normpath(path) + '/'
-        email = conf.get(fqdn, 'email')
-        if email.find(',') > -1:
-            admins = []
-            for admin in email.split(','):
-                admins.append(admin.strip())
-        else:
-            admins = [email]
+
+        admins = comma2array(conf.get(fqdn, 'email'))
+
         mailmap[path] = {'fqdn': fqdn, 'admins': admins}
 
     return mailmap
@@ -258,10 +254,11 @@ def nagowners(naglist, smtp, opts):
         except smtplib.SMTPRecipientsRefused, ex:
             print 'Nagging failed: %s' % ex
 
-
-def checknagstate(sconn, installed_dir, product_name, found_version, opts):
-
-    return daysleft
+def comma2array(commastr):
+    entries = []
+    for entry in commastr.split(','):
+        entries.append(entry.strip())
+    return entries
 
 def main():
     '''
@@ -294,11 +291,13 @@ def main():
               Default: all')
     parser.add_option('--mailopts', dest='mailopts',
         help='Send notification emails and use these options.')
+    parser.add_option('--do-not-nag', dest='do_not_nag',
+        help='Do not nag about anything in this path')
 
     (opts, args) = parser.parse_args()
     
     if not args:
-        parser.error('You must specify a path where to look for crud.')
+        parser.error('You must specify a path where to mine for crud.')
 
     rootpath = os.path.abspath(args[0])
 
@@ -332,17 +331,13 @@ def main():
 
         mailmap = loadmailmap(mailini.get('main', 'mailmap'))
 
-        nagdays    = mailini.getint('main', 'nagdays')
-        nagfreq    = mailini.getint('main', 'nagfreq')
-        mailhost   = mailini.get('main', 'mailhost')
-        statedb    = mailini.get('main', 'statedb')
-
-        subject  = mailini.get('nagmail', 'subject')
-        mailfrom = mailini.get('nagmail', 'from')
-        mailcc = []
-        for email in mailini.get('nagmail', 'cc').split(','):
-            mailcc.append(email.strip())
-
+        nagdays     = mailini.getint('main', 'nagdays')
+        nagfreq     = mailini.getint('main', 'nagfreq')
+        mailhost    = mailini.get('main', 'mailhost')
+        statedb     = mailini.get('main', 'statedb')
+        subject     = mailini.get('nagmail', 'subject')
+        mailfrom    = mailini.get('nagmail', 'from')
+        mailcc      = comma2array(mailini.get('nagmail', 'cc'))
         greeting    = mailini.get('nagmail', 'greeting')
         daysleft    = mailini.get('nagmail', 'daysleft')
         productline = mailini.get('nagmail', 'productline')
@@ -539,13 +534,8 @@ def main():
             hostentry = mailini.get('nagreport', 'hostentry')
             closing   = mailini.get('nagreport', 'closing')
 
-            mailto = []
-            for email in mailini.get('nagreport', 'to').split(','):
-                mailto.append(email.strip())
-
-            mailcc = []
-            for email in mailini.get('nagreport', 'cc').split(','):
-                mailcc.append(email.strip())
+            mailto = comma2array(mailini.get('nagreport', 'to'))
+            mailcc = comma2array(mailini.get('nagreport', 'cc'))
 
             values = {
                     'nagdays': nagdays,
@@ -591,7 +581,5 @@ def main():
         sconn.commit()
         smtp.quit()
 
-
-    
 if __name__ == '__main__':
     main()
