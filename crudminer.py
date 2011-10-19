@@ -1,5 +1,5 @@
 #!/usr/bin/python -tt
-##
+#
 # Copyright (C) 2011 by McGill University
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,10 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 # @Author Konstantin Ryabitsev <konstantin.ryabitsev@mcgill.ca>
-# @version $Date$
+# @version 0.3
 #
 
 import os, sys
@@ -30,6 +28,11 @@ from fnmatch      import fnmatch
 import smtplib
 
 try:
+    import sqlite3 as sqlite
+except ImportError:
+    import sqlite
+
+try:
     from email.mime.text import MIMEText
     from email.utils import COMMASPACE
 except ImportError:
@@ -37,33 +40,55 @@ except ImportError:
     from email.MIMEText import MIMEText
     from email.Utils import COMMASPACE
 
-VERSION   = '0.2'
-CRUDFILE  = './crud.ini'
+import time, datetime
+
+
+VERSION  = '0.3'
+CRUDFILE = 'crud.ini'
+MAILOPTS = 'mailopts.ini'
 
 dotremove = re.compile('^\.$', re.MULTILINE)
 
 class CrudProduct:
+    """
+    Class to hold information about every product we're checking for.
+    Basically, it takes information from crud.ini and provides a couple
+    of methods to make comparions more convenient.
+    """
 
     def __init__(self, name, config):
-        self.name    = name
+        """
+        @param   name: the name of the product
+        @param config: the ConfigParser object of crud.ini
+        """
+        #: The product name
+        self.name    = name 
+        #: How to combine the groups in the regex into the version number
         self.expand  = config.get(name, 'expand')
+        #: The secure version of the product
         self.secure  = config.get(name, 'secure')
+        #: Some comments about the product, if any
         self.comment = config.get(name, 'comment')
+        #: The language environment of the product (e.g. "php")
         self.env     = config.get(name, 'env')
+        #: URL for the vulnerability
         self.infourl = config.get(name, 'infourl')
 
         regex = config.get(name, 'regex')
-
+        #: Compiled regex to get the version out of a file
         self.regex   = re.compile(regex, re.MULTILINE | re.DOTALL)
+
+        #: Used internally to identify alpha-numeric strings
         self.isalnum = re.compile('[^a-zA-Z0-9]')
 
-    # Adapted from a function found on
-    # http://concisionandconcinnity.blogspot.com/
-    # Snippet Copyright 2008 Ian McCracken, licensed under GPLv3.
     def _gen_segments(self, val):
         """
         Generator that splits a string into segments.
         e.g., '2xFg33.+f.5' => ('2', 'xFg', '33', 'f', '5')
+
+        Adapted from a function found on
+        http://concisionandconcinnity.blogspot.com/
+        Snippet Copyright 2008 Ian McCracken, licensed under GPLv3.
         """
         val = self.isalnum.split(val)
         for dot in val:
@@ -87,6 +112,10 @@ class CrudProduct:
             ver1  < ver2  return -1
             ver1 == ver2: return  0
             ver1  > ver2: return  1
+
+        Adapted from a function found on
+        http://concisionandconcinnity.blogspot.com/
+        Snippet Copyright 2008 Ian McCracken, licensed under GPLv3.
         """
 
         # If they're the same, we're done
@@ -118,6 +147,18 @@ class CrudProduct:
         return 0
 
     def analyze(self, contents):
+        """
+        Try to find the product version in the file contents.
+
+        @param contents: the contents of a file
+        @type  contents: str
+
+        @return: (is_secure, got_version)
+                    is_secure:   boolean True if the version is secure
+                    got_version: str the version we found
+        @rtype: tuple
+        """
+
         match = self.regex.search(contents)
         if match is None:
             return None
@@ -132,7 +173,28 @@ class CrudProduct:
         return (is_secure, got_version)
 
 def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
+    """
+    Look at all the files in the path provided and attempt to find 
+    the products we recognize.
 
+    Returns a report with the findings in the format:
+
+    @param rootpath: the root path of where to look for crud
+    @type  rootpath: str
+    @param crudfile: the location of crud.ini
+    @type  crudfile: str
+    @param quiet: whether to be quiet
+    @type  quiet: boolean
+    @param wantenv: list of environments  (e.g.: ['php', 'perl'], [] means all)
+
+    @return: List of tuples in the following format:
+                [(installdir, product, status, got_version), ...]
+                installdir:  string, path with the location of the product
+                product:     CrudProduct, the product found
+                status:      string, 'secure' or 'vulnerable'
+                got_version: string, version of the product found
+    @rtype: list
+    """
     config = ConfigParser()
     if crudfile.find('://') > -1:
         import urllib2
@@ -203,6 +265,23 @@ def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
     return report
 
 def loadmailmap(mailmapini):
+    """
+    Load mailmap.ini file and return the dict with contents.
+    
+    @param mailmapini: path with mailmap.ini
+    @type  mailmapini: string
+
+    @return: dict in the following format:
+             {
+                 '/some/path': {
+                    'fqdn':   'foobar.baz', 
+                    'admins': ['eml1', 'eml2']
+                 },
+                 ...
+             }
+    @rtype dict
+    """
+
     conf = ConfigParser()
     conf.read(mailmapini)
 
@@ -218,7 +297,19 @@ def loadmailmap(mailmapini):
 
     return mailmap
 
-def nagowners(naglist, smtp, opts):
+def nagowners(naglist, smtp, quiet):
+    """
+    Nags the owners of sites with insecure software.
+
+    @param naglist: dict with various bits related to nagging
+    @type  naglist: dict
+    @param smtp: smtp object
+    @type  smtp: smtplib.SMTP
+    @param quiet: whether to output anything to the console
+    @type  quiet: boolean
+    
+    @rtype: void
+    """
     for sitename, nagdata in naglist.items():
         body = nagdata['greeting']
         body += '\n'
@@ -246,7 +337,7 @@ def nagowners(naglist, smtp, opts):
             msg['Cc'] = COMMASPACE.join(nagdata['mailcc'])
             recipients.extend(nagdata['mailcc'])
 
-        if not opts.quiet:
+        if not quiet:
             print 'Nagging: %s' % msg['To']
 
         try:
@@ -255,6 +346,15 @@ def nagowners(naglist, smtp, opts):
             print 'Nagging failed: %s' % ex
 
 def comma2array(commastr):
+    """
+    Helper function to convert "foo, bar, baz" into ['foo', 'bar', 'baz']
+
+    @param commastr: comma-separated string
+    @type  commastr: str
+
+    @rtype: list
+    """
+
     entries = []
     for entry in commastr.split(','):
         entries.append(entry.strip())
@@ -290,9 +390,11 @@ def main():
         help='Only analyze for these environments (php, perl, etc). \
               Default: all')
     parser.add_option('--mailopts', dest='mailopts',
-        help='Send notification emails and use these options.')
+        default=MAILOPTS,
+        help='Mail options to use when sending notifications.')
     parser.add_option('--do-not-nag', dest='do_not_nag',
-        help='Do not nag about anything in this path')
+        action='store_true', default=False,
+        help='Do not nag about anything found during this run.')
 
     (opts, args) = parser.parse_args()
     
@@ -327,7 +429,6 @@ def main():
         # load mail options
         mailini = RawConfigParser()
         mailini.read(opts.mailopts)
-        mainopts = mailini.items('main')
 
         mailmap = loadmailmap(mailini.get('main', 'mailmap'))
 
@@ -347,13 +448,6 @@ def main():
         hasinfourl  = mailini.get('nagmail', 'hasinfourl')
         closing     = mailini.get('nagmail', 'closing')
         
-        try:
-            import sqlite3 as sqlite
-        except ImportError:
-            import sqlite
-
-        import time, datetime
-
         if not os.path.exists(statedb):
             # create the database
             sconn = sqlite.connect(statedb)
@@ -424,6 +518,20 @@ def main():
                     # we were asked not to nag them
                     continue
 
+                if opts.do_not_nag:
+                    # we were asked to stop nagging about this issue
+                    dnquery = """
+                        UPDATE nagstate
+                           SET do_not_nag = 1
+                         WHERE installed_dir = '""" + installed_dir_sql + """'
+                           AND product_name  = '""" + product_name_sql  + """'
+                           AND found_version = '""" + found_version_sql + "'"
+                    scursor.execute(dnquery)
+                    if not opts.quiet:
+                        print "Will no longer nag about %s v. %s in %s" % (
+                                product.name, got_version, installdir)
+                    continue
+
                 # sqlite3 and sqlite behave differently, so we cast to 
                 # strings. Depending on the version, it may or may not 
                 # contain 00:00:00.00 at the end
@@ -483,16 +591,22 @@ def main():
                     
                 else:
                     if sitename not in naglist.keys():
+                        if not isnew:
+                            mysubject = 'Re: %s' % subject
+                        else:
+                            mysubject = subject
+
                         naglist[sitename] = {
                                 'admins'  : mailmap[path]['admins'],
                                 'mailfrom': mailfrom,
                                 'mailcc'  : mailcc,
-                                'subject' : subject % values,
+                                'subject' : mysubject % values,
                                 'greeting': greeting % values,
                                 'daysleft': daysleft % values,
                                 'products': [],
                                 'closing' : closing % values
                                 }
+                           
 
                 # formulate product lines
 
@@ -521,13 +635,19 @@ def main():
 
                 break
 
-        # send the mail now
-        smtp = smtplib.SMTP(mailhost)
-    
+        smtp = None
+        
         if naglist:
-            nagowners(naglist, smtp, opts)
+            # send the mail now
+            smtp = smtplib.SMTP(mailhost)
+            nagowners(naglist, smtp, opts.quiet)
 
         if offenders:
+            # I know that I need to refactor this, considering
+            # nagowners is its own method.
+            if smtp is None:
+                smtp = smtplib.SMTP(mailhost)
+
             subject   = mailini.get('nagreport', 'subject')
             mailfrom  = mailini.get('nagreport', 'from')
             greeting  = mailini.get('nagreport', 'greeting')
@@ -579,7 +699,6 @@ def main():
                 print 'Sending offender report failed: %s' % ex
 
         sconn.commit()
-        smtp.quit()
 
 if __name__ == '__main__':
     main()

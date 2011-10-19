@@ -3,6 +3,3 @@ TODO
 - Distinction between critical and non-critical vulnerabilities
   - Who says what is critical?
   - A lot more extra work!
-
-- Allow a list of paths to exclude
-  - With a list of versions not to check? A.k.a. "we know, shut up."
