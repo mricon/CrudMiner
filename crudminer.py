@@ -448,26 +448,13 @@ def main():
         hasinfourl  = mailini.get('nagmail', 'hasinfourl')
         closing     = mailini.get('nagmail', 'closing')
         
-        if not os.path.exists(statedb):
-            # create the database
-            sconn = sqlite.connect(statedb)
-            query = """CREATE TABLE nagstate (
-                              installed_dir TEXT,
-                              product_name  TEXT,
-                              found_version TEXT,
-                              found_date    DATE DEFAULT CURRENT_DATE,
-                              nag_date      DATE DEFAULT CURRENT_DATE,
-                              do_not_nag    INTEGER DEFAULT 0)"""
-            scursor = sconn.cursor()
-            scursor.execute(query)
-        else:
-            sconn = sqlite.connect(statedb)
-
         naglist = {}
         offenders = {}
 
         now  = time.localtime()
         nowdate = datetime.date(now[0], now[1], now[2])
+
+        sconn = None
 
         for (installdir, product, status, got_version) in report:
             if status == 'secure':
@@ -481,9 +468,26 @@ def main():
                     continue
 
                 # Do we have it in statedb?
+                if sconn is None:
+                    if not os.path.exists(statedb):
+                        # create the database
+                        sconn = sqlite.connect(statedb)
+                        query = """CREATE TABLE nagstate (
+                                          installed_dir TEXT,
+                                          product_name  TEXT,
+                                          found_version TEXT,
+                                          found_date  DATE DEFAULT CURRENT_DATE,
+                                          nag_date    DATE DEFAULT CURRENT_DATE,
+                                          do_not_nag  INTEGER DEFAULT 0)"""
+                        scursor = sconn.cursor()
+                        scursor.execute(query)
+                    else:
+                        sconn = sqlite.connect(statedb)
+
                 installed_dir_sql = installdir.replace("'", "''")
                 product_name_sql  = product.name.replace("'", "''")
                 found_version_sql = got_version.replace("'", "''")
+
                 equery = """
                     SELECT found_date, nag_date, do_not_nag
                       FROM nagstate
@@ -635,6 +639,9 @@ def main():
 
                 break
 
+        if sconn is not None:
+            sconn.commit()
+
         smtp = None
         
         if naglist:
@@ -698,7 +705,6 @@ def main():
             except smtplib.SMTPRecipientsRefused, ex:
                 print 'Sending offender report failed: %s' % ex
 
-        sconn.commit()
 
 if __name__ == '__main__':
     main()
