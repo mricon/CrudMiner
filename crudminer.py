@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # @Author Konstantin Ryabitsev <konstantin.ryabitsev@mcgill.ca>
-# @version 0.3.1
+# @version 0.3.2
 #
 
 import os, sys
@@ -43,7 +43,7 @@ except ImportError:
 import time, datetime
 
 
-VERSION  = '0.3.1'
+VERSION  = '0.3.2'
 CRUDFILE = 'crud.ini'
 MAILOPTS = 'mailopts.ini'
 
