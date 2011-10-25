@@ -3,3 +3,11 @@ TODO
 - Distinction between critical and non-critical vulnerabilities
   - Who says what is critical?
   - A lot more extra work!
+
+- For projects like phpldapadmin that only have a VERSION file, I'll need to
+  add an option to list another file to query and match. E.g.:
+
+  path     = /VERSION
+  regex    = RELEASE-(.*)
+  andpath  = /index.php
+  andregex = @package\s*phpLDAPAdmin
