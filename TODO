@@ -11,3 +11,16 @@ TODO
   regex    = RELEASE-(.*)
   andpath  = /index.php
   andregex = @package\s*phpLDAPAdmin
+
+  Target: 0.4.0
+
+- Make --do-not-nag less blunt, by using an upper-ceiling date. This way if
+  someone says "thanks for letting me know, we will implement this by the end
+  of next month", you could do:
+  
+  crudminer --do-not-nag /path/to/their/stuff 2011-12-31
+
+  Target: 0.4.0
+  Migration: add a "do_not_nag_until" column and ignore the "do_not_nag"
+             column if found. Any existing entries with non-zero value in
+             do_not_nag can be converted to today+1 year.
