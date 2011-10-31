@@ -422,9 +422,10 @@ def nagstate_connect(statedb):
         try:
             scursor.execute(query)
             (dbversion,)  = scursor.fetchone()
-        except sqlite.OperationalError:
+        except:
             # Assume this is because it's db version 1, which didn't
-            # have a meta table
+            # have a meta table. Unfortunately, sqlite and sqlite3 throw
+            # different exceptions in this case. *grumble*
             dbversion = 1
 
         if dbversion == 1:
@@ -661,7 +662,7 @@ def main():
                 nag_date   = sqlite2datetime(nag_date)
                 found_date = sqlite2datetime(found_date)
 
-                nagdiff = now_date - found_date
+                nagdiff = now_date - nag_date
 
                 if not isnew and nagdiff.days < nagfreq:
                     # they don't get nagged
