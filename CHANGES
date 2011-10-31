@@ -1,0 +1,9 @@
+0.4.0
+-----
+- Replace --do-not-nag with --do-not-nag-until
+- Add "andpath" option to crud.ini, so we can be more precise looking
+  for some products.
+
+0.3.x
+-----
+- Initial public release
