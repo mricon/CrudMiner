@@ -8,7 +8,7 @@ Find known-vulnerable software in a webroot
 :Date:      2011-10-19
 :Copyright: McGill University and contributors
 :License:   GPLv3
-:Version:   0.4
+:Version:   0.4.0
 
 SYNOPSIS
 --------
