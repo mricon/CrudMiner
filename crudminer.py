@@ -1,6 +1,6 @@
 #!/usr/bin/python -tt
 #
-# Copyright (C) 2011 by McGill University
+# Copyright (C) 2011 by McGill University and contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # @Author Konstantin Ryabitsev <konstantin.ryabitsev@mcgill.ca>
-# @version 0.3.2
+# @version 0.4
 #
 
 import os, sys
 import re
 
-from ConfigParser import ConfigParser, RawConfigParser
+from ConfigParser import ConfigParser, RawConfigParser, NoOptionError
 from fnmatch      import fnmatch
 
 import smtplib
@@ -43,9 +43,10 @@ except ImportError:
 import time, datetime
 
 
-VERSION  = '0.3.2'
-CRUDFILE = 'crud.ini'
-MAILOPTS = 'mailopts.ini'
+VERSION   = '0.4'
+DBVERSION = 2
+CRUDFILE  = 'crud.ini'
+MAILOPTS  = 'mailopts.ini'
 
 dotremove = re.compile('^\.$', re.MULTILINE)
 
@@ -73,6 +74,16 @@ class CrudProduct:
         self.env     = config.get(name, 'env')
         #: URL for the vulnerability
         self.infourl = config.get(name, 'infourl')
+        #: additional paths to check to help differentiate products
+        self.andpath = []
+        
+        try:
+            andpath = config.get(name, 'andpath')
+            if andpath != '':
+                self.andpath = comma2array(andpath)
+        except NoOptionError:
+            # assume we have an older crud.ini without andpath=
+            pass
 
         regex = config.get(name, 'regex')
         #: Compiled regex to get the version out of a file
@@ -146,10 +157,12 @@ class CrudProduct:
 
         return 0
 
-    def analyze(self, contents):
+    def analyze(self, installdir, contents):
         """
         Try to find the product version in the file contents.
 
+        @param installdir: the directory that matched (for andpath checking)
+        @type  installdir: str
         @param contents: the contents of a file
         @type  contents: str
 
@@ -158,6 +171,14 @@ class CrudProduct:
                     got_version: str the version we found
         @rtype: tuple
         """
+
+        if self.andpath:
+            # look for other files relative to this dir to verify
+            # that it's not some other product with similar files
+            for checkpath in self.andpath:
+                fullpath = os.path.normpath(installdir + checkpath)
+                if not os.access(fullpath, os.R_OK):
+                    return None
 
         match = self.regex.search(contents)
         if match is None:
@@ -245,7 +266,7 @@ def analyze_dir(rootpath, crudfile, quiet, wantenv=[]):
                     contents = fh.read()
                     fh.close()
                     for product in seekpaths[seekpath]:
-                        result = product.analyze(contents) 
+                        result = product.analyze(installdir, contents) 
                         if result is None:
                             continue
                         (is_secure, got_version) = result
@@ -360,6 +381,103 @@ def comma2array(commastr):
         entries.append(entry.strip())
     return entries
 
+def nagstate_connect(statedb):
+    """
+    Helper function to establish a connection to the nagstate database,
+    initialize it if necessary, and perform the required conversions.
+
+    @param statedb: the location of the nagstate database
+    @type  statedb: str
+
+    @rtype: sqlite.Connection
+    """
+    if not os.path.exists(statedb):
+        # create the database
+        sconn   = sqlite.connect(statedb)
+        scursor = sconn.cursor()
+
+        query = """CREATE TABLE nagstate (
+                          installed_dir    TEXT,
+                          product_name     TEXT,
+                          found_version    TEXT,
+                          found_date       DATE DEFAULT CURRENT_DATE,
+                          nag_date         DATE DEFAULT CURRENT_DATE,
+                          do_not_nag_until DATE DEFAULT NULL)"""
+        scursor.execute(query)
+
+        query = """CREATE TABLE meta (
+                          dbversion INTEGER
+                          )"""
+        scursor.execute(query)
+        query = "INSERT INTO meta (dbversion) VALUES (%d)" % DBVERSION
+        scursor.execute(query)
+        sconn.commit()
+
+    else:
+        sconn   = sqlite.connect(statedb)
+        scursor = sconn.cursor()
+
+        # Do we need to upgrade the table?
+        query = "SELECT dbversion FROM meta"
+        try:
+            scursor.execute(query)
+            (dbversion,)  = scursor.fetchone()
+        except sqlite.OperationalError:
+            # Assume this is because it's db version 1, which didn't
+            # have a meta table
+            dbversion = 1
+
+        if dbversion == 1:
+            # Add do_not_nag_until column
+            query = """ALTER TABLE nagstate 
+                         ADD COLUMN do_not_nag_until DATE DEFAULT NULL"""
+            scursor.execute(query)
+            # change all do_not_nag == 1 to do_not_nag_until = today + 1 year
+            query = """
+                UPDATE nagstate
+                   SET do_not_nag_until = date('now', '+1 year')
+                 WHERE do_not_nag = 1"""
+            scursor.execute(query)
+            # Add the meta table
+            query = """CREATE TABLE meta (
+                              dbversion INTEGER
+                              )"""
+            scursor.execute(query)
+            query = "INSERT INTO meta (dbversion) VALUES (2)"
+            scursor.execute(query)
+
+            sconn.commit()
+
+            dbversion = 2
+
+    return sconn
+
+def sqlite2datetime(sqlitedate):
+    """
+    Convert sqlite's date into a python datetime.
+    This is dirtier, and yet easier than trying to set connection options 
+    to sqlite and then making it work with both sqlite and sqlite3.
+
+    @param sqlitedate: Sqlite's date string
+    @type  sqlitedate: str
+
+    @rtype datetime
+    """
+    # sqlite3 and sqlite behave differently, so we cast to 
+    # strings. Depending on the version, it may or may not 
+    # contain 00:00:00.00 at the end
+
+    sqlitedate = str(sqlitedate)
+    if sqlitedate.find('00:00:00.00') > 0:
+        datefmt = '%Y-%m-%d 00:00:00.00'
+    else:
+        datefmt = '%Y-%m-%d'
+
+    pdate = time.strptime(sqlitedate, datefmt)
+    rdate = datetime.date(pdate[0], pdate[1], pdate[2])
+
+    return rdate
+
 def main():
     '''
     Main invocation.
@@ -392,9 +510,10 @@ def main():
     parser.add_option('--mailopts', dest='mailopts',
         default=MAILOPTS,
         help='Mail options to use when sending notifications.')
-    parser.add_option('--do-not-nag', dest='do_not_nag',
-        action='store_true', default=False,
-        help='Do not nag about anything found during this run.')
+    parser.add_option('--do-not-nag-until', dest='do_not_nag_until',
+        default=None,
+        help='''Do not nag about anything found during this run until 
+                this date (YYYY-MM-DD).''')
 
     (opts, args) = parser.parse_args()
     
@@ -452,7 +571,7 @@ def main():
         offenders = {}
 
         now  = time.localtime()
-        nowdate = datetime.date(now[0], now[1], now[2])
+        now_date = datetime.date(now[0], now[1], now[2])
 
         sconn = None
 
@@ -469,27 +588,14 @@ def main():
 
                 # Do we have it in statedb?
                 if sconn is None:
-                    if not os.path.exists(statedb):
-                        # create the database
-                        sconn = sqlite.connect(statedb)
-                        query = """CREATE TABLE nagstate (
-                                          installed_dir TEXT,
-                                          product_name  TEXT,
-                                          found_version TEXT,
-                                          found_date  DATE DEFAULT CURRENT_DATE,
-                                          nag_date    DATE DEFAULT CURRENT_DATE,
-                                          do_not_nag  INTEGER DEFAULT 0)"""
-                        scursor = sconn.cursor()
-                        scursor.execute(query)
-                    else:
-                        sconn = sqlite.connect(statedb)
+                    sconn = nagstate_connect(statedb)
 
                 installed_dir_sql = installdir.replace("'", "''")
                 product_name_sql  = product.name.replace("'", "''")
                 found_version_sql = got_version.replace("'", "''")
 
                 equery = """
-                    SELECT found_date, nag_date, do_not_nag
+                    SELECT found_date, nag_date, do_not_nag_until
                       FROM nagstate
                      WHERE installed_dir = '""" + installed_dir_sql + """'
                        AND product_name  = '""" + product_name_sql  + """'
@@ -516,41 +622,46 @@ def main():
                     scursor.execute(equery)
                     row = scursor.fetchone()
                     
-                (found_date, nag_date, do_not_nag) = row
+                (found_date, nag_date, do_not_nag_until) = row
                 # do they need to be nagged?
-                if do_not_nag != 0:
-                    # we were asked not to nag them
-                    continue
 
-                if opts.do_not_nag:
+                if do_not_nag_until is not None:
+                    # we were asked not to nag them
+                    until_date = sqlite2datetime(do_not_nag_until)
+                    if now_date < until_date:
+                        if not opts.quiet:
+                            print "Not nagging about %s v.%s in %s until %s" % (
+                                    product.name, got_version, installdir,
+                                    until_date.isoformat())
+                        continue
+
+                if opts.do_not_nag_until:
                     # we were asked to stop nagging about this issue
+                    # Sanity check on date format
+                    try:
+                        sqlite2datetime(opts.do_not_nag_until)
+                    except ValueError:
+                        print "%s is not in YYYY-MM-DD format" \
+                                % opts.do_not_nag_until
+                        sys.exit(1)
+
+                    until_sql = opts.do_not_nag_until.replace("'", "''")
                     dnquery = """
                         UPDATE nagstate
-                           SET do_not_nag = 1
+                           SET do_not_nag_until = '""" + until_sql + """'
                          WHERE installed_dir = '""" + installed_dir_sql + """'
                            AND product_name  = '""" + product_name_sql  + """'
                            AND found_version = '""" + found_version_sql + "'"
                     scursor.execute(dnquery)
                     if not opts.quiet:
-                        print "Will no longer nag about %s v. %s in %s" % (
+                        print "Will no longer nag about %s v.%s in %s" % (
                                 product.name, got_version, installdir)
                     continue
 
-                # sqlite3 and sqlite behave differently, so we cast to 
-                # strings. Depending on the version, it may or may not 
-                # contain 00:00:00.00 at the end
-                nag_date   = str(nag_date)
-                found_date = str(found_date)
+                nag_date   = sqlite2datetime(nag_date)
+                found_date = sqlite2datetime(found_date)
 
-                try:
-                    then  = time.strptime(nag_date, '%Y-%m-%d')
-                    found = time.strptime(found_date, '%Y-%m-%d')
-                except ValueError:
-                    then  = time.strptime(nag_date, '%Y-%m-%d 00:00:00.00')
-                    found = time.strptime(found_date, '%Y-%m-%d 00:00:00.00')
-                    
-                thendate = datetime.date(then[0], then[1], then[2])
-                nagdiff = nowdate - thendate
+                nagdiff = now_date - found_date
 
                 if not isnew and nagdiff.days < nagfreq:
                     # they don't get nagged
@@ -565,8 +676,7 @@ def main():
                        AND found_version = '""" + found_version_sql + "'"
                 scursor.execute(uquery)
 
-                founddiff = nowdate - datetime.date(found[0], found[1], 
-                                                    found[2])
+                founddiff = now_date - found_date
 
                 sitename = mailmap[path]['fqdn']
 

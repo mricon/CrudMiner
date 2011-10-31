@@ -6,9 +6,9 @@ Find known-vulnerable software in a webroot
 
 :Author:    konstantin.ryabitsev@mcgill.ca
 :Date:      2011-10-19
-:Copyright: McGill University
+:Copyright: McGill University and contributors
 :License:   GPLv3
-:Version:   0.3.2
+:Version:   0.4
 
 SYNOPSIS
 --------
@@ -37,7 +37,10 @@ OPTIONS
                         Only analyze for these environments (php, perl, etc).
                         Default: all
   --mailopts=MAILOPTS   Mail options to use when sending notifications.
-  --do-not-nag          Do not nag about anything found during this run.
+  --do-not-nag-until=DO_NOT_NAG_UNTIL
+                        Do not nag about anything found during this run until
+                        this date (YYYY-MM-DD).
+
 
 
 EXAMPLES
@@ -82,11 +85,12 @@ legitimate reasons for a specific version of the software to be
 installed, or if there is a global .htaccess that prevents any
 exploitation of said software), you may run the following::
 
-    crudminer.py --do-not-nag /path/to/ignore
+    crudminer.py --do-not-nag-until 2012-12-31 /path/to/ignore
 
-This will stop nagging as long as the version of the installed software
-remains the same. If new vulnerable software is found or if the
-installed version of the software changes, the nagging will recommence.
+This will stop nagging until specified date, as long as the version of
+the installed software remains the same. If new vulnerable software is
+found or if the installed version of the software changes, the nagging
+will recommence regardless of the date specified.
 
 FURTHER WORK
 ------------
