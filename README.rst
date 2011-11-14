@@ -4,7 +4,7 @@ CrudMiner
 Find known-vulnerable software in a webroot
 -------------------------------------------
 
-:Author:    konstantin.ryabitsev@mcgill.ca
+:Author:    konstantin@linuxfoundation.org
 :Date:      2011-10-19
 :Copyright: McGill University and contributors
 :License:   GPLv3

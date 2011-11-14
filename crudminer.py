@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# @Author Konstantin Ryabitsev <konstantin.ryabitsev@mcgill.ca>
+# @Author Konstantin Ryabitsev <konstantin@linuxfoundation.org>
 # @version 0.4.0
 #
 
