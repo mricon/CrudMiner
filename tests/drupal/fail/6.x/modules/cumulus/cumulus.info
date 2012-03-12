@@ -1,0 +1,12 @@
+name = Cumulus
+description = "Provides a Flash-based 3D tag cloud."
+core = 6.x
+dependencies[] = tagadelic
+package = "Taxonomy"
+
+; Information added by drupal.org packaging script on 2011-10-10
+version = "6.x-1.4"
+core = "6.x"
+project = "cumulus"
+datestamp = "1318232504"
+

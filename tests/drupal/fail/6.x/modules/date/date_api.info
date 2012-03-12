@@ -1,0 +1,11 @@
+name = Date API
+description = A Date API that can be used by other modules.
+package = Date/Time
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-01-11
+version = "6.x-2.6"
+core = "6.x"
+project = "date"
+datestamp = "1326285938"
+

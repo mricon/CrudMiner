@@ -1,0 +1,11 @@
+name = "Certificate Login"
+description = "Allow users to login/register by certificate"
+core = 6.x
+php =4
+
+; Information added by drupal.org packaging script on 2011-10-11
+version = "6.x-2.2"
+core = "6.x"
+project = "certificatelogin"
+datestamp = "1318364500"
+

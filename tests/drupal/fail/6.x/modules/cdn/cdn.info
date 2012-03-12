@@ -1,0 +1,13 @@
+name = CDN
+description = "Integrates your site with a CDN, through altering file URLs."
+
+core = 6.x
+package = Performance and scalability
+dependencies[] = ctools
+
+; Information added by drupal.org packaging script on 2012-02-15
+version = "6.x-2.2"
+core = "6.x"
+project = "cdn"
+datestamp = "1329338739"
+
