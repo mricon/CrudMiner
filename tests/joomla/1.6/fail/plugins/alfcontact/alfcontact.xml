@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<install type="component" version="1.5.0">
+  <name>ALFcontact</name>
+  <creationDate>November 2011</creationDate>
+  <author>Alfred Vink</author>
+  <copyright>GNU/GPL</copyright>
+  <authorEmail>alfred@alfsoft.com</authorEmail>
+  <authorUrl>www.alfsoft.com</authorUrl>
+  <version>1.9.3</version>
+  <installfile>install.alfcontact.php</installfile>
+  <uninstallfile>uninstall.alfcontact.php</uninstallfile>

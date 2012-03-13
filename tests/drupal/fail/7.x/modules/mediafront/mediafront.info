@@ -1,0 +1,21 @@
+name = MediaFront
+description = A front end media solution for Drupal.
+package = MediaFront
+core = 7.x
+files[] = mediafront.module
+files[] = mediafront.install
+files[] = mediafront.admin.inc
+files[] = includes/mediafront.filefield.inc
+files[] = includes/mediafront.field.inc
+files[] = views/mediafront.views.inc
+files[] = views/mediafront_plugin_style_player.inc
+files[] = views/mediafront_plugin_style_player_advanced.inc
+files[] = views/mediafront_handler_field_player.inc
+required = FALSE
+configure = admin/structure/mediafront
+; Information added by drupal.org packaging script on 2012-02-29
+version = "7.x-1.4"
+core = "7.x"
+project = "mediafront"
+datestamp = "1330482674"
+

@@ -1,0 +1,12 @@
+name = Faster Permissions
+description = Override the core permissions form for better UX
+package = People
+core = 7.x
+dependencies[] = user
+dependencies[] = system
+; Information added by drupal.org packaging script on 2012-02-15
+version = "7.x-1.1"
+core = "7.x"
+project = "fp"
+datestamp = "1329341738"
+

@@ -1,0 +1,15 @@
+name = Finder
+description = "Create forms for users to find nodes, users, or anything views can display."
+core = 7.x
+package = "Finder"
+dependencies[] = ctools
+dependencies[] = views
+files[]=views/finder_plugin_display.inc
+files[]=views/finder_plugin_style.inc
+files[]=includes/finder.inc
+; Information added by drupal.org packaging script on 2012-02-08
+version = "7.x-2.0-alpha7"
+core = "7.x"
+project = "finder"
+datestamp = "1328680842"
+

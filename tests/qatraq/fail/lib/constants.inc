@@ -1,0 +1,5 @@
+$GLOBALS['_CONSTANTS_INC']=1;
+
+define("QATRAQ_VERSION_FULL", "6.8.1");
+define("QATRAQ_VERSION", 6.8);
+

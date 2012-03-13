@@ -1,0 +1,21 @@
+; $ID: $
+name = Sticky Note
+description = "Adds ability to add sticky notes"
+core = 7.x
+files[] = stickynote.controller.inc
+files[] = includes/stickynote.admin.inc
+files[] = includes/stickynote.block.inc
+stylesheets[all][] = css/stickynote.css
+; Information added by drupal.org packaging script on 2011-10-13
+version = "7.x-1.0"
+core = "7.x"
+project = "stickynote"
+datestamp = "1318540600"
+
+
+; Information added by drupal.org packaging script on 2012-01-18
+version = "7.x-1.0"
+core = "7.x"
+project = "stickynote"
+datestamp = "1326849046"
+

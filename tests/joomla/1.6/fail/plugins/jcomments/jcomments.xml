@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE install SYSTEM "http://dev.joomla.org/xml/1.5/component-install.dtd">
+<install type="component" version="1.5.0" method="upgrade">
+	<name>JComments</name>
+	<creationDate>12/09/2010</creationDate>
+	<author>smart</author>
+	<authorEmail>smart@joomlatune.ru</authorEmail>
+	<authorUrl>http://www.joomlatune.ru</authorUrl>
+	<copyright>Copyright 2006-2010 JoomlaTune.ru All rights reserved!</copyright>
+	<license>http://www.gnu.org/copyleft/gpl.html GNU/GPL</license>
+	<version>2.1.1.9</version>
+	<description><![CDATA[JComments lets your users comment on content items.]]></description>

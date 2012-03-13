@@ -1,0 +1,13 @@
+name = Homebox
+description = Provides user with a page like iGoogle, Netvibes or bbc.co.uk front page
+dependencies[] = block
+package = Homebox
+core = 7.x
+configure = admin/structure/homebox
+
+; Information added by drupal.org packaging script on 2011-10-05
+version = "7.x-2.0-beta5"
+core = "7.x"
+project = "homebox"
+datestamp = "1317831105"
+

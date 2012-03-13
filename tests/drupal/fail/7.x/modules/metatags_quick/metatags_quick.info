@@ -1,0 +1,11 @@
+name = Meta tags (quick)
+description = Meta tags support build using FieldAPI/EntityAPI
+core = 7.x
+package = Meta tags (quick)
+
+; Information added by drupal.org packaging script on 2011-12-14
+version = "7.x-2.2"
+core = "7.x"
+project = "metatags_quick"
+datestamp = "1323885345"
+
