@@ -1,0 +1,13 @@
+name = Fill PDF
+description = Allows users to populate PDF forms from submitted node data.
+package = Other
+core = 6.x
+
+dependencies[] = content
+dependencies[] = token
+; Information added by drupal.org packaging script on 2012-01-04
+version = "6.x-1.15"
+core = "6.x"
+project = "fillpdf"
+datestamp = "1325701540"
+

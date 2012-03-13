@@ -1,0 +1,10 @@
+name = Finder
+description = "Create forms for users to find stuff."
+core = 6.x
+package = "Finder"
+; Information added by drupal.org packaging script on 2012-02-08
+version = "6.x-1.25"
+core = "6.x"
+project = "finder"
+datestamp = "1328680847"
+

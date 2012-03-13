@@ -1,0 +1,14 @@
+
+name = "Submenu Tree"
+description = "For nodes which are menu items, this module adds a listing of any submenu items below it"
+dependencies[] = menu
+core = 6.x
+
+
+
+; Information added by drupal.org packaging script on 2011-04-20
+version = "6.x-1.4"
+core = "6.x"
+project = "submenutree"
+datestamp = "1303273916"
+

@@ -1,5 +1,13 @@
-; Information added by drupal.org packaging script on 2011-01-10
-version = "6.x-3.4"
+; $Id: $
+name = Webform
+description = Enables the creation of forms and questionnaires.
+core = 6.x
+package = Webform
+php = 5.1
+
+; Information added by drupal.org packaging script on 2011-05-18
+version = "6.x-3.9"
 core = "6.x"
 project = "webform"
-datestamp = "1294652806"
+datestamp = "1305756717"
+

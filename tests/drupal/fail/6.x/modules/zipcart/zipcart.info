@@ -1,0 +1,12 @@
+name = "ZipCart"
+description = "Allow users to add files to a cart, then download them as a zip."
+package = "Other"
+project = "zipcart"
+core = "6.x"
+
+; Information added by drupal.org packaging script on 2012-02-29
+version = "6.x-1.3"
+core = "6.x"
+project = "zipcart"
+datestamp = "1330481454"
+

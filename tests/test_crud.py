@@ -28,7 +28,8 @@ TESTDIR  = '.'
 CRUDFILE = '../crud.ini'
 
 def compare_results(want, results):
-    assert want in results, '"%s" not found in results' % want
+    assert want in results, \
+        '"%s ver %s" not found in results' % (want[0], want[3])
 
 def check_sections(crudsec, testsecs):
     assert crudsec in testsecs, 'section "%s" not found in test.ini' % crudsec

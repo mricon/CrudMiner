@@ -1,0 +1,14 @@
+name = Organic groups vocabularies
+description = "Enable groups to maintain their own vocabularies."
+dependencies[] = og
+dependencies[] = taxonomy
+package = "Organic groups"
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2012-02-15
+version = "6.x-1.1"
+core = "6.x"
+project = "og_vocab"
+datestamp = "1329316549"
+

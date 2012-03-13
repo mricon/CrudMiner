@@ -1,0 +1,9 @@
+name = Forward 
+description = Forward this page module
+core = "6.x"
+; Information added by drupal.org packaging script on 2012-02-01
+version = "6.x-1.20"
+core = "6.x"
+project = "forward"
+datestamp = "1328062852"
+

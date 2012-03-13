@@ -1,0 +1,12 @@
+name = "Hotblocks"
+description = "Add, remove, and reorder nodes or blocks to a page without leaving or reloading the page or using editors."
+dependencies[] = content
+core = 6.x
+version = 6.x-1.x dev
+
+; Information added by drupal.org packaging script on 2011-11-02
+version = "6.x-1.5"
+core = "6.x"
+project = "hotblocks"
+datestamp = "1320247232"
+

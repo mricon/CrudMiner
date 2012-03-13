@@ -1,0 +1,10 @@
+name = Video Filter
+description = Filter to include videos from Youtube, Google video etc
+core = 6.x
+package = Input filters
+; Information added by drupal.org packaging script on 2012-01-11
+version = "6.x-2.9"
+core = "6.x"
+project = "video_filter"
+datestamp = "1326312347"
+

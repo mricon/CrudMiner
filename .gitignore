@@ -1,3 +1,4 @@
 nagstate.sqlite
 *.swp
 *.pyc
+*~

@@ -1,0 +1,12 @@
+name = Rate
+description = Flexible voting options for nodes and comments
+core = 6.x
+package = Voting
+dependencies[] = votingapi
+
+; Information added by drupal.org packaging script on 2011-10-04
+version = "6.x-1.2"
+core = "6.x"
+project = "rate"
+datestamp = "1317768706"
+

@@ -1,0 +1,11 @@
+name = Revisioning
+description = Allows the creation and modification of content while the current revision remains unchanged and publicly visible until the changes have been reviewed by a moderator.
+core = 6.x
+dependencies[] = node_tools
+
+; Information added by drupal.org packaging script on 2012-02-07
+version = "6.x-3.13"
+core = "6.x"
+project = "revisioning"
+datestamp = "1328609447"
+

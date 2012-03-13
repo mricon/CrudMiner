@@ -1,0 +1,13 @@
+name = Homebox
+description = Provides user with a page like iGoogle, Netvibes or bbc.co.uk front page
+dependencies[] = block
+dependencies[] = jquery_ui
+package = Homebox
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-10-05
+version = "6.x-3.0-beta2"
+core = "6.x"
+project = "homebox"
+datestamp = "1317837704"
+

@@ -1,0 +1,18 @@
+name = MediaFront
+description = A front end media solution for Drupal.
+package = MediaFront
+version = VERSION
+core = 6.x
+; Information added by drupal.org packaging script on 2010-05-24
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "mediafront"
+datestamp = "1274659909"
+
+
+; Information added by drupal.org packaging script on 2012-02-29
+version = "6.x-1.4"
+core = "6.x"
+project = "mediafront"
+datestamp = "1330482686"
+
