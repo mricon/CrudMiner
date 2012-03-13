@@ -1,0 +1,10 @@
+name = Node Recommendation
+description = "Selective recommendation based on different settings"
+dependencies[] = taxonomy
+core = 6.x
+; Information added by drupal.org packaging script on 2012-03-07
+version = "6.x-1.0"
+core = "6.x"
+project = "noderecommendation"
+datestamp = "1331138449"
+
