@@ -92,6 +92,31 @@ the installed software remains the same. If new vulnerable software is
 found or if the installed version of the software changes, the nagging
 will recommence regardless of the date specified.
 
+ADDING PRODUCTS
+---------------
+To add a product, follow this simple procedure:
+
+1. Identify the file in the product that specifies the version.
+2. Create the testcase in tests/, usually following the following mask::
+
+       tests/productname/fail/[ver]/path/to/file.php
+
+   You should just copy the file you're matching in there, though
+   feel free to remove anything but the few lines before/after the
+   version string.
+
+3. Use a product like kodos to write a successful regex against the
+   version number.
+4. Add the entry to crud.ini
+5. Add the entry to tests/test.ini, specifying which version the test
+   should report (usually one or two revisions prior to the secure
+   version).
+6. Run the tests (you'll need to install python-nose)::
+
+        nosetests -w tests/
+
+6. Add to the project and push (or submit pull request).
+
 FURTHER WORK
 ------------
 As you can tell, this is fairly early in the development. You should
