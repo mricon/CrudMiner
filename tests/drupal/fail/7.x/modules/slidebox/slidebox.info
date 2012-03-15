@@ -1,0 +1,17 @@
+name = Slidebox
+description = A slide-out box linking to the next piece of content in a sequence
+core = 7.x
+package = Other
+files[] = slidebox.module
+files[] = slidebox.admin.inc
+files[] = slidebox.tpl.php
+files[] = js/slidebox.js
+files[] = css/slidebox.css
+
+
+; Information added by drupal.org packaging script on 2012-03-14
+version = "7.x-1.3"
+core = "7.x"
+project = "slidebox"
+datestamp = "1331736044"
+

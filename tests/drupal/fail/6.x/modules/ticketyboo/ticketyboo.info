@@ -1,0 +1,11 @@
+name = Ticketyboo News Ticker
+description = Displays the teasers of selected nodes in a scrolling news ticker
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2009-01-13
+version = "6.x-1.3"
+core = "6.x"
+project = "ticketyboo"
+datestamp = "1231885245"
+

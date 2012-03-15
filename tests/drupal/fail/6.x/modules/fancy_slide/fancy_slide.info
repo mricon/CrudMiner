@@ -1,0 +1,13 @@
+; $Id: fancy_slide.info,v 1.1 2009/09/11 09:59:29 chriscohen Exp $
+name = Fancy Slide
+description = A configurable fancy-looking slideshow.
+core = 6.x
+version = 6.x-2.x-dev
+dependencies[] = content
+dependencies[] = imagefield
+; Information added by drupal.org packaging script on 2012-01-26
+version = "6.x-2.6"
+core = "6.x"
+project = "fancy_slide"
+datestamp = "1327590649"
+
