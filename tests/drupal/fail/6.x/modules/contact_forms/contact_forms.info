@@ -1,0 +1,11 @@
+name = Contact Forms
+description = Creates individual contact pages from contact form categories.
+dependencies[] = contact
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-03-28
+version = "6.x-1.12"
+core = "6.x"
+project = "contact_forms"
+datestamp = "1332937554"
+

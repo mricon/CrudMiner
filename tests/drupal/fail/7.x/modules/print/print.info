@@ -1,0 +1,16 @@
+name = "Printer-friendly pages"
+description = "Adds a printer-friendly version link to content and administrative pages."
+core=7.x
+package = "Printer, email and PDF versions"
+files[] = print.module
+files[] = print.admin.inc
+files[] = print.pages.inc
+files[] = print.install
+configure = admin/config/user-interface/print
+
+; Information added by drupal.org packaging script on 2012-04-04
+version = "7.x-0.9"
+core = "7.x"
+project = "print"
+datestamp = "1333551370"
+

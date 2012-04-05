@@ -1,0 +1,12 @@
+; $Id: contact_save.info,v 1.1 2010/03/22 18:38:25 joelstein Exp $
+name = Contact Save
+description = Saves contact messages in the database.
+core = 6.x
+dependencies[] = contact
+
+; Information added by drupal.org packaging script on 2010-10-26
+version = "6.x-1.4"
+core = "6.x"
+project = "contact_save"
+datestamp = "1288128930"
+

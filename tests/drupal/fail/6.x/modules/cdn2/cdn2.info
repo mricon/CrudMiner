@@ -1,0 +1,12 @@
+
+name = CDN2 Video
+description = Video uploading and transcoding service
+package = Media
+dependencies[] = content
+core = 6.x
+; Information added by drupal.org packaging script on 2009-10-07
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "cdn2"
+datestamp = "1254917178"
+

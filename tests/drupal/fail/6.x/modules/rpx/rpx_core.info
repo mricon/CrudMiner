@@ -1,0 +1,11 @@
+name = Janrain Engage Core
+description = Core sign-in functionality for Janrain Engage.
+package = Janrain Engage
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-04-04
+version = "6.x-2.1"
+core = "6.x"
+project = "rpx"
+datestamp = "1333553182"
+

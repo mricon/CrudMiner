@@ -1,0 +1,11 @@
+name = Node limit number
+description = Limit number of nodes of a given type a user can publish based on his/her roles.
+dependencies[] = node
+core = 6.x
+package = Other
+; Information added by drupal.org packaging script on 2012-03-28
+version = "6.x-1.1"
+core = "6.x"
+project = "node_limitnumber"
+datestamp = "1332949546"
+
