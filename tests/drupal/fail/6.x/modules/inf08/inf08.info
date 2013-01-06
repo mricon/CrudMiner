@@ -1,0 +1,39 @@
+; $Id: inf08.info,v 1.3 2009/09/05 13:28:35 kong Exp $
+
+name = Inf08
+description = Port of the free CSS template from <a href="http://www.infscripts.com">Inf Design</a>
+core = 6.x
+engine = phptemplate
+
+screenshot = images/screenshot.png
+
+regions[header] = header
+regions[content_top] = content top
+regions[content] = content
+regions[content_bottom] = content bottom
+regions[sidebar_top] = sidebar top
+regions[sidebar] = sidebar
+regions[sidebar_left] = sidebar left
+regions[sidebar_right] = sidebar right
+regions[footer] = footer
+
+features[] = name
+features[] = slogan
+features[] = primary_links
+features[] = mission
+features[] = comment_user_picture
+features[] = search
+features[] = favicon
+features[] = logo
+
+scripts[] = js/suckerfish.js
+
+stylesheets[all][] = css/style.css
+;stylesheets[all][] = css/custom.css
+
+; Information added by drupal.org packaging script on 2009-09-07
+version = "6.x-1.9"
+core = "6.x"
+project = "inf08"
+datestamp = "1252335697"
+

@@ -1,0 +1,12 @@
+name = PRH Search
+package = PRH
+description = PRH (finnish Patentti- ja Rekisterihallitus) association search integration for Drupal 7
+core = 7.x
+files[] = includes/prh.inc
+
+; Information added by drupal.org packaging script on 2012-08-29
+version = "7.x-1.0"
+core = "7.x"
+project = "prh_search"
+datestamp = "1346254195"
+

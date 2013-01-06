@@ -1,0 +1,11 @@
+name = "PDFThumb"
+configure = admin/config/media/pdfthumb
+description = "Create PDF Thumbnails from PDF file fields"
+core = "7.x"
+
+; Information added by drupal.org packaging script on 2012-03-17
+version = "7.x-1.0"
+core = "7.x"
+project = "pdfthumb"
+datestamp = "1331976942"
+

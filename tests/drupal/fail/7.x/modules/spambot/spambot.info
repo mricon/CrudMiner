@@ -1,0 +1,12 @@
+name = Spambot
+description = Anti-spam module that uses data from www.stopforumspam.com to protect the user registration form against known spammers and spambots. 
+
+configure = admin/config/system/spambot
+core = 7.x
+
+; Information added by drupal.org packaging script on 2011-11-26
+version = "7.x-1.0"
+core = "7.x"
+project = "spambot"
+datestamp = "1322311847"
+

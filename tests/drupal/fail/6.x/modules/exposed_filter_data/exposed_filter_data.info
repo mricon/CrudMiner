@@ -1,0 +1,12 @@
+name = "Exposed Filter Data"
+description = "Provides simple way to print exposed filter data"
+dependencies[] = views
+package = Views
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-08-07
+version = "6.x-1.1"
+core = "6.x"
+project = "exposed_filter_data"
+datestamp = "1312725716"
+

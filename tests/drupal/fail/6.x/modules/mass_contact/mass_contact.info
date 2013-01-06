@@ -1,0 +1,13 @@
+; $Id: mass_contact.info,v 1.3 2008/05/28 00:09:12 oadaeh Exp $
+name = Mass Contact
+description = "Enables site administrator or privileged users to send mass e-mails to registered users. (This module will take advantage of the Token module, if it is installed and enabled, but does not require it.)"
+package = "Mail"
+core = 6.x
+php = 4.3.5
+
+; Information added by drupal.org packaging script on 2011-02-24
+version = "6.x-1.1"
+core = "6.x"
+project = "mass_contact"
+datestamp = "1298579620"
+

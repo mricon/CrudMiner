@@ -1,0 +1,14 @@
+name = "Simplenews Scheduler"
+description = "Allows a schedule to be set for sending (and resending) a Simplenews item."
+core = 6.x
+package = Mail
+dependencies[] = simplenews
+dependencies[] = date_api
+dependencies[] = token
+
+; Information added by drupal.org packaging script on 2012-07-06
+version = "6.x-2.3"
+core = "6.x"
+project = "simplenews_scheduler"
+datestamp = "1341565035"
+

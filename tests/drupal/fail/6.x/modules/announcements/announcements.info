@@ -1,0 +1,10 @@
+; $Id: announcements.info,v 1.1.4.1 2008/05/20 02:13:55 nancyw Exp $
+name = Announcements
+description = Provides an announcements content type and management of that type.
+core = 6.x
+; Information added by drupal.org packaging script on 2010-10-28
+version = "6.x-1.4"
+core = "6.x"
+project = "announcements"
+datestamp = "1288294252"
+
