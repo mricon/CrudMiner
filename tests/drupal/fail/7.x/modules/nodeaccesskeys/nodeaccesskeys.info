@@ -1,0 +1,14 @@
+name = Node Access Keys
+description = Node Access Keys helps to grant users temporary view permissions.
+package = Content access control
+core = 7.x
+files[] = nodeaccesskeys.test
+files[] = views_plugin_access_nodeaccesskeys.inc
+configure = admin/config/people/nodeaccesskeys/settings
+
+; Information added by  packaging script on 2013-11-01
+version = "7.x-1.0"
+core = "7.x"
+project = "nodeaccesskeys"
+datestamp = "1383348468"
+

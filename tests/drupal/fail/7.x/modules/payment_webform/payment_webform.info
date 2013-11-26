@@ -1,0 +1,17 @@
+name = Payment for Webform
+description = Allows Webform submissions to receive payments.
+configure = admin/config/services/payment/payment_webform
+core = 7.x
+dependencies[] = currency
+dependencies[] = payment (>1.8)
+dependencies[] = paymentreference
+dependencies[] = webform
+package = Payment
+files[] = tests/PaymentWebformTestQueueWebTestCase.test
+
+; Information added by  packaging script on 2013-11-05
+version = "7.x-1.4"
+core = "7.x"
+project = "payment_webform"
+datestamp = "1383677305"
+

@@ -1,0 +1,11 @@
+name = Misery
+description = Makes life miserable for users.
+package = Other
+core = 6.x
+dependencies[] = manifest
+; Information added by  packaging script on 2013-11-12
+version = "6.x-2.4"
+core = "6.x"
+project = "misery"
+datestamp = "1384290555"
+

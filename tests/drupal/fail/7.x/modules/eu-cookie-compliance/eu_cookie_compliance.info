@@ -1,0 +1,11 @@
+name = EU Cookie Compliance
+description = This module aims at making the website compliant with the new EU cookie regulation 
+core = 7.x
+configure = admin/config/system/eu-cookie-compliance
+
+; Information added by  packaging script on 2013-11-20
+version = "7.x-1.11"
+core = "7.x"
+project = "eu-cookie-compliance"
+datestamp = "1384944505"
+
