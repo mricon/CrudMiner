@@ -1,0 +1,16 @@
+name = Google Site Search
+description = Provides integration with Google Site Search.
+core = 7.x
+
+dependencies[] = search
+files[] = gss.module
+files[] = gss.theme.inc
+scripts[] = scripts/autocomplete.js
+
+
+; Information added by drupal.org packaging script on 2013-04-19
+version = "7.x-1.9"
+core = "7.x"
+project = "gss"
+datestamp = "1366401912"
+
