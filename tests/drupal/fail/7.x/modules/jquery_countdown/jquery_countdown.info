@@ -1,0 +1,21 @@
+; $Id$
+name = jQuery Countdown
+description = Provides the jQuery Countdown plugin by Keith Wood.
+version = VERSION
+core = 7.x
+package = User interface
+configure = admin/config/user-interface/jquery-countdown
+
+dependencies[] = date_popup
+
+; Additional included files
+files[] = jquery_countdown.rules.inc
+files[] = jquery_countdown.admin.inc
+files[] = jquery_countdown.pages.inc
+
+; Information added by drupal.org packaging script on 2011-11-15
+version = "7.x-1.0"
+core = "7.x"
+project = "jquery_countdown"
+datestamp = "1321346745"
+

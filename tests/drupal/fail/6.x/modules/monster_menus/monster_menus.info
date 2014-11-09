@@ -1,0 +1,13 @@
+name = Monster Menus
+description = Provides a menu system with granular node access.
+dependencies[] = jquery_ui
+dependencies[] = thickbox
+package = Amherst
+version = "6.x-1.0"
+core = 6.x
+; Information added by drupal.org packaging script on 2013-08-02
+version = "6.x-6.60"
+core = "6.x"
+project = "monster_menus"
+datestamp = "1375466469"
+
