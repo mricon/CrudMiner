@@ -1,4 +1,4 @@
 <?php
 /** MediaWiki version number */
-$wgVersion = '1.19.2';
+$wgVersion = '1.19.19';
 
