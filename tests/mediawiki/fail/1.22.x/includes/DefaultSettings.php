@@ -1,1 +1,1 @@
-$wgVersion = '1.22.11';
+$wgVersion = '1.22.13';
