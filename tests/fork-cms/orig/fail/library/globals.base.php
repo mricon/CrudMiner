@@ -2,4 +2,4 @@
  * Fork configuration
  */
 // version of Fork
-define('FORK_VERSION', '3.1.6');
+define('FORK_VERSION', '3.4.4');
