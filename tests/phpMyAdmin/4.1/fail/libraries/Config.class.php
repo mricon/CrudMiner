@@ -3,7 +3,7 @@
      */
     function checkSystem()
     {
-        $this->set('PMA_VERSION', '4.1.14.6');
+        $this->set('PMA_VERSION', '4.1.14.7');
         /**
          * @deprecated
          */
