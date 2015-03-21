@@ -1,1 +1,1 @@
-define('RCMAIL_VERSION', '0.9.4');
+define('RCMAIL_VERSION', '1.0.4');
